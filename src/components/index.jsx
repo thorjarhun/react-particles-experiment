@@ -1,75 +1,45 @@
-
 import React, { PropTypes, Component } from 'react';
-import ReactDOM from 'react-dom';
+import { connect } from 'react-redux';
 import { select as d3Select, mouse as d3Mouse, touches as d3Touches } from 'd3';
-import { Stage, Layer, Circle, FastLayer } from 'react-konva';
 
 import Particles from './Particles';
 import Footer from './Footer';
 import Header from './Header';
+import { createParticles } from '../actions';
+
+const mapStateToProps = (state) => ({...state});
+
+const mapDispatchToProps = dispatch => ({
+  createParticles: (x, y) => dispatch(createParticles(x, y))
+});
+
+const ReduxContainer = connect(mapStateToProps, mapDispatchToProps);
 
 class App extends Component {
     componentDidMount() {
-        let svg = d3Select(this.refs.svgWrap);
-
+        let svg = d3Select(this.refs.svg);
         svg.on('mousedown', () => {
-            this.updateMousePos();
-            this.props.startParticles();
+            let [x, y] = d3Mouse(this.refs.svg);
+            this.props.createParticles(x, y);
         });
         svg.on('touchstart', () => {
-            this.updateTouchPos();
-            this.props.startParticles();
+            let [x, y] = d3Touches(this.refs.svg)[0];
+            this.props.createParticles(x, y);
         });
-        svg.on('mousemove', () => {
-            this.updateMousePos();
-        });
-        svg.on('touchmove', () => {
-            this.updateTouchPos();
-        });
-        svg.on('mouseup', () => {
-            this.props.stopParticles();
-        });
-        svg.on('touchend', () => {
-            this.props.stopParticles();
-        });
-        svg.on('mouseleave', () => {
-            this.props.stopParticles();
-        });
-
     }
-
-    updateMousePos() {
-        let [x, y] = d3Mouse(this.refs.svgWrap);
-        this.props.updateMousePos(x, y);
-    }
-
-    updateTouchPos() {
-        let [x, y] = d3Touches(this.refs.svgWrap)[0];
-        this.props.updateMousePos(x, y);
-    }
-
     render() {
         return (
-            <div onMouseDown={e => this.props.startTicker()} style={{overflow: 'hidden'}}>
+            <div style={{overflow: 'hidden'}}>
                  <Header />
-                 <div style={{width: this.props.svgWidth,
+                 <svg style={{width: this.props.svgWidth,
                               height: this.props.svgHeight,
                               position: 'absolute',
                               top: '0px',
                               left: '0px',
                               background: 'rgba(124, 224, 249, .3)'}}
-                      ref="svgWrap">
-                     <Stage width={this.props.svgWidth} height={this.props.svgHeight}>
-                         <FastLayer>
-                             {this.props.charges.map((charge, i) => (
-                                 <Circle x={charge.x} y={charge.y} radius={3} fill="black" key={i} />
-                             ))}
-                         </FastLayer>
-                         <Particles particles={this.props.particles} />
-
-                     </Stage>
-
-                 </div>
+                      ref="svg">
+                      <Particles particles={this.props.particles} />
+                 </svg>
                  <Footer N={this.props.particles.length} />
              </div>
         );
@@ -78,11 +48,7 @@ class App extends Component {
 
 App.propTypes = {
     svgWidth: PropTypes.number.isRequired,
-    svgHeight: PropTypes.number.isRequired,
-    startTicker: PropTypes.func.isRequired,
-    startParticles: PropTypes.func.isRequired,
-    stopParticles: PropTypes.func.isRequired,
-    updateMousePos: PropTypes.func.isRequired
+    svgHeight: PropTypes.number.isRequired
 };
 
-export default App;
+export default ReduxContainer(App);
